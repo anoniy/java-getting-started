@@ -86,6 +86,7 @@ public class Main {
 
         try (Connection connection = dataSource.getConnection()) {
             Statement stmt = connection.createStatement();
+            stmt.executeUpdate("DROP TABLE temps");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS temps (temp varchar(10))");
             stmt.executeUpdate(String.format("INSERT INTO temps VALUES (%s)", celsiusTemp));
             ResultSet rs = stmt.executeQuery("SELECT temp FROM temps");
