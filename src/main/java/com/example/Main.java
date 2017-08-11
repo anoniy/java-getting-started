@@ -92,7 +92,7 @@ public class Main {
     String dropTemperatureTable() {
         try (Connection connection = dataSource.getConnection()) {
             Statement statement = connection.createStatement();
-            statement.executeQuery("SELECT * FROM temps");
+            statement.executeQuery("DROP TABLE temps");
 
             statement.close();
             connection.close();
