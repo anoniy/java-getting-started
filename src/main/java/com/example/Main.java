@@ -60,7 +60,7 @@ public class Main {
             stmt.executeUpdate("drop table temps");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS temps (tempIn varchar(10), tempOut varchar(10))");
             stmt.executeUpdate(String.format("INSERT INTO temps VALUES (%s, %s)", cTempIn, cTempOut));
-            ResultSet rs = stmt.executeQuery("SELECT temp FROM temps");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM temps");
 
             ArrayList<TempDTO> output = new ArrayList<>();
             while (rs.next()) {
