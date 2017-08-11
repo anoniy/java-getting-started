@@ -92,7 +92,7 @@ public class Main {
     String dropTemperatureTable() {
         try (Connection connection = dataSource.getConnection()) {
             Statement statement = connection.createStatement();
-            statement.executeQuery("DROP TABLE temps");
+            statement.executeQuery("DROP TABLE IF EXISTS temps");
 
             statement.close();
             connection.close();
@@ -105,7 +105,7 @@ public class Main {
     private void initTemperatureTable(Statement statement) throws SQLException {
         statement.executeUpdate("CREATE TABLE IF NOT EXISTS temps (" +
                 "tempIn varchar(10), " +
-                "tempOut varchar(10)" +
+                "tempOut varchar(10)," +
                 "measureDate timestamp)");
     }
 
