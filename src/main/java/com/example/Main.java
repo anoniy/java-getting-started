@@ -30,10 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 @Controller
@@ -50,54 +47,78 @@ public class Main {
         SpringApplication.run(Main.class, args);
     }
 
-    @RequestMapping("/setTemp")
+    @RequestMapping("/addTemperature")
     public @ResponseBody
-    String setTemperatures(@RequestParam("tempIn") String cTempIn,
-                           @RequestParam("tempOut") String cTempOut) {
+    String addTemperature(@RequestParam("tempIn") String cTempIn, @RequestParam("tempOut") String cTempOut) {
         ObjectMapper mapper = new ObjectMapper();
 
         try (Connection connection = dataSource.getConnection()) {
-            Statement stmt = connection.createStatement();
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS temps (tempIn varchar(10), tempOut varchar(10))");
-            stmt.executeUpdate(String.format("INSERT INTO temps VALUES (%s, %s)", cTempIn, cTempOut));
-            ResultSet rs = stmt.executeQuery("SELECT * FROM temps");
+            Statement statement = connection.createStatement();
 
-            ArrayList<TempDTO> result = new ArrayList<>();
-            while (rs.next()) {
-                String tempIn = rs.getString("tempIn");
-                String tempOut = rs.getString("tempOut");
-                result.add(new TempDTO(tempIn, tempOut));
-            }
+            initTemperatureTable(statement);
+            statement.executeUpdate(String.format("INSERT INTO temps VALUES (%s, %s, now())", cTempIn, cTempOut));
 
+            ArrayList<TemperatureDTO> listTemperatures = readListTemperatures(statement);
+
+            statement.close();
             connection.close();
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(listTemperatures);
         } catch (Exception e) {
             return String.format("{\"status\": false, \"message\": \"%s\"}", e.getMessage());
         }
     }
 
-    @RequestMapping("/getTemp")
+    @RequestMapping("/getListTemperatures")
     public @ResponseBody
     String getTemperatures() {
         ObjectMapper mapper = new ObjectMapper();
 
         try (Connection connection = dataSource.getConnection()) {
-            Statement stmt = connection.createStatement();
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS temps (tempIn varchar(10), tempOut varchar(10))");
-            ResultSet rs = stmt.executeQuery("SELECT * FROM temps");
+            Statement statement = connection.createStatement();
 
-            ArrayList<TempDTO> result = new ArrayList<>();
-            while (rs.next()){
-                String tempIn = rs.getString("tempIn");
-                String tempOut = rs.getString("tempOut");
-                result.add(new TempDTO(tempIn, tempOut));
-            }
+            initTemperatureTable(statement);
+            ArrayList<TemperatureDTO> listTemperatures = readListTemperatures(statement);
 
+            statement.close();
             connection.close();
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(listTemperatures);
         } catch (Exception e) {
             return String.format("{\"status\": false, \"message\": \"%s\"}", e.getMessage());
         }
+    }
+
+    @RequestMapping("/dropTemperatureTable")
+    public @ResponseBody
+    String dropTemperatureTable() {
+        try (Connection connection = dataSource.getConnection()) {
+            Statement statement = connection.createStatement();
+            statement.executeQuery("SELECT * FROM temps");
+
+            statement.close();
+            connection.close();
+            return "base was dropped";
+        } catch (Exception e) {
+            return String.format("{\"status\": false, \"message\": \"%s\"}", e.getMessage());
+        }
+    }
+
+    private void initTemperatureTable(Statement statement) throws SQLException {
+        statement.executeUpdate("CREATE TABLE IF NOT EXISTS temps (" +
+                "tempIn varchar(10), " +
+                "tempOut varchar(10)" +
+                "measureDate timestamp)");
+    }
+
+    private ArrayList<TemperatureDTO> readListTemperatures(Statement stmt) throws SQLException {
+        ArrayList<TemperatureDTO> result = new ArrayList<>();
+        ResultSet rs = stmt.executeQuery("SELECT * FROM temps");
+        while (rs.next()) {
+            String tempIn = rs.getString("tempIn");
+            String tempOut = rs.getString("tempOut");
+            String measureDate = rs.getTimestamp("measureDate").toString();
+            result.add(new TemperatureDTO(tempIn, tempOut, measureDate));
+        }
+        return result;
     }
 
     @Bean
