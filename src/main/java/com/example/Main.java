@@ -52,7 +52,8 @@ public class Main {
 
     @RequestMapping("/setTemp")
     public @ResponseBody
-    String setTemp(@RequestParam("cTempIn") String cTempIn, @RequestParam("cTempOut") String cTempOut) {
+    String setTemperatures(@RequestParam("tempIn") String cTempIn,
+                           @RequestParam("tempOut") String cTempOut) {
         ObjectMapper mapper = new ObjectMapper();
 
         try (Connection connection = dataSource.getConnection()) {
@@ -61,14 +62,39 @@ public class Main {
             stmt.executeUpdate(String.format("INSERT INTO temps VALUES (%s, %s)", cTempIn, cTempOut));
             ResultSet rs = stmt.executeQuery("SELECT * FROM temps");
 
-            ArrayList<TempDTO> output = new ArrayList<>();
+            ArrayList<TempDTO> result = new ArrayList<>();
             while (rs.next()) {
                 String tempIn = rs.getString("tempIn");
                 String tempOut = rs.getString("tempOut");
-                output.add(new TempDTO(tempIn, tempOut));
+                result.add(new TempDTO(tempIn, tempOut));
             }
 
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(output);
+            connection.close();
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+        } catch (Exception e) {
+            return String.format("{\"status\": false, \"message\": \"%s\"}", e.getMessage());
+        }
+    }
+
+    @RequestMapping("/getTemp")
+    public @ResponseBody
+    String getTemperatures() {
+        ObjectMapper mapper = new ObjectMapper();
+
+        try (Connection connection = dataSource.getConnection()) {
+            Statement stmt = connection.createStatement();
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS temps (tempIn varchar(10), tempOut varchar(10))");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM temps");
+
+            ArrayList<TempDTO> result = new ArrayList<>();
+            while (rs.next()){
+                String tempIn = rs.getString("tempIn");
+                String tempOut = rs.getString("tempOut");
+                result.add(new TempDTO(tempIn, tempOut));
+            }
+
+            connection.close();
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
         } catch (Exception e) {
             return String.format("{\"status\": false, \"message\": \"%s\"}", e.getMessage());
         }
