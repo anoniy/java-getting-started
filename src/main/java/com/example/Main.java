@@ -53,46 +53,23 @@ public class Main {
         SpringApplication.run(Main.class, args);
     }
 
-    @RequestMapping("/")
-    String index() {
-        return "index";
-    }
-
-    @RequestMapping("/db")
-    String db(Map<String, Object> model) {
-        try (Connection connection = dataSource.getConnection()) {
-            Statement stmt = connection.createStatement();
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS ticks (tick timestamp)");
-            stmt.executeUpdate("INSERT INTO ticks VALUES (now())");
-            ResultSet rs = stmt.executeQuery("SELECT tick FROM ticks");
-
-            ArrayList<String> output = new ArrayList<String>();
-            while (rs.next()) {
-                output.add("Read from DB: " + rs.getTimestamp("tick"));
-            }
-
-            model.put("records", output);
-            return "db";
-        } catch (Exception e) {
-            model.put("message", e.getMessage());
-            return "error";
-        }
-    }
-
     @RequestMapping("/setTemp")
     public @ResponseBody
-    String byParameter(@RequestParam("celsiusTemp") String celsiusTemp) {
+    String setTemp(@RequestParam("cTempIn") String cTempIn, @RequestParam("cTempOut") String cTempOut) {
         ObjectMapper mapper = new ObjectMapper();
 
         try (Connection connection = dataSource.getConnection()) {
             Statement stmt = connection.createStatement();
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS temps (temp varchar(10))");
-            stmt.executeUpdate(String.format("INSERT INTO temps VALUES (%s)", celsiusTemp));
+            stmt.executeUpdate("DELETE TABLE temps");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS temps (tempIn varchar(10), tempOut varchar(10))");
+            stmt.executeUpdate(String.format("INSERT INTO temps VALUES (%s, %s)", cTempIn, cTempOut));
             ResultSet rs = stmt.executeQuery("SELECT temp FROM temps");
 
-            ArrayList<String> output = new ArrayList<>();
+            ArrayList<TempDTO> output = new ArrayList<>();
             while (rs.next()) {
-                output.add("temp in DB "+ rs.getString("temp"));
+                String tempIn = rs.getString("tempIn");
+                String tempOut = rs.getString("tempOut");
+                output.add(new TempDTO(tempIn, tempOut));
             }
 
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(output);
