@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @SpringBootApplication
@@ -58,7 +59,7 @@ public class Main {
             initTemperatureTable(statement);
             statement.executeUpdate(String.format("INSERT INTO temps VALUES (%s, %s, now())", cTempIn, cTempOut));
 
-            ArrayList<TemperatureDTO> listTemperatures = readListTemperatures(statement);
+            List<TemperatureDTO> listTemperatures = readListTemperatures(statement);
 
             statement.close();
             connection.close();
@@ -77,7 +78,7 @@ public class Main {
             Statement statement = connection.createStatement();
 
             initTemperatureTable(statement);
-            ArrayList<TemperatureDTO> listTemperatures = readListTemperatures(statement);
+            List<TemperatureDTO> listTemperatures = readListTemperatures(statement);
 
             statement.close();
             connection.close();
@@ -109,8 +110,8 @@ public class Main {
                 "measureDate timestamp)");
     }
 
-    private ArrayList<TemperatureDTO> readListTemperatures(Statement stmt) throws SQLException {
-        ArrayList<TemperatureDTO> result = new ArrayList<>();
+    private List<TemperatureDTO> readListTemperatures(Statement stmt) throws SQLException {
+        List<TemperatureDTO> result = new ArrayList<>();
         int MAX = 25;
         ResultSet rs = stmt.executeQuery("SELECT * FROM temps");
         while (rs.next()) {
