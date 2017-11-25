@@ -111,6 +111,7 @@ public class Main {
 
     private ArrayList<TemperatureDTO> readListTemperatures(Statement stmt) throws SQLException {
         ArrayList<TemperatureDTO> result = new ArrayList<>();
+        int MAX = 25;
         ResultSet rs = stmt.executeQuery("SELECT * FROM temps");
         while (rs.next()) {
             String tempIn = rs.getString("tempIn");
@@ -118,7 +119,11 @@ public class Main {
             String measureDate = rs.getTimestamp("measureDate").toString();
             result.add(new TemperatureDTO(tempIn, tempOut, measureDate));
         }
-        return result;
+        if(result.size() > MAX) {
+            return result.subList(result.size() - MAX, result.size());
+        }else{
+            return result;
+        }
     }
 
     @Bean
